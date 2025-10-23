@@ -1,0 +1,3 @@
+Contendrá las clases de modelo que representan las entidades principales del sistema.
+Ejemplo: Producto, Venta, Compra.
+Cada clase define los atributos y relaciones que se guardarán en la base de datos.

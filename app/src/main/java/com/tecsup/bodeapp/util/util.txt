@@ -1,0 +1,2 @@
+Aquí se almacenarán funciones o clases de utilidad general que ayuden a simplificar tareas comunes del proyecto.
+Ejemplo: formateo de texto, validaciones, cálculos o extensiones personalizadas.

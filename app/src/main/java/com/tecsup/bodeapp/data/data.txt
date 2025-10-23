@@ -1,0 +1,3 @@
+Contiene las clases y funciones relacionadas con el acceso a datos.
+Aquí se manejarán las operaciones de lectura y escritura en la base de datos local (Room) o en archivos.
+Ejemplo: DAOs, controladores de persistencia, y fuentes de datos simuladas.

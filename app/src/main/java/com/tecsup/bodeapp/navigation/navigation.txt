@@ -1,0 +1,2 @@
+Aquí se define la estructura de navegación de la app usando Navigation Compose.
+Se especificarán las rutas entre pantallas (Home, Ventas, Compras, Cierre de Caja, etc.) y el gráfico de navegación (NavHost).
