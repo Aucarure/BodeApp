@@ -11,7 +11,7 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.tooling.preview.Preview
-import com.tecsup.bodeapp.ui.HomeScreen
+import com.tecsup.bodeapp.navigation.AppNavigation
 import com.tecsup.bodeapp.ui.theme.BodeAppTheme
 
 class MainActivity : ComponentActivity() {
@@ -20,24 +20,9 @@ class MainActivity : ComponentActivity() {
         enableEdgeToEdge()
         setContent {
             BodeAppTheme {
-                HomeScreen()
+                AppNavigation()
             }
         }
     }
 }
 
-@Composable
-fun Greeting(name: String, modifier: Modifier = Modifier) {
-    Text(
-        text = "Hello $name!",
-        modifier = modifier
-    )
-}
-
-@Preview(showBackground = true)
-@Composable
-fun GreetingPreview() {
-    BodeAppTheme {
-        Greeting("Android")
-    }
-}
