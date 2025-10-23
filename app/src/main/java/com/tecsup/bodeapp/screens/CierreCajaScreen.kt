@@ -5,5 +5,5 @@ import androidx.compose.runtime.Composable
 
 @Composable
 fun CierreCajaScreen(){
-    Text("pantalla de inicio")
+    Text("PANTALLA DE CAJA")
 }

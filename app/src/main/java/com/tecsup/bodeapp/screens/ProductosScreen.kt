@@ -5,5 +5,5 @@ import androidx.compose.runtime.Composable
 
 @Composable
 fun ProductosScreen(){
-    Text("pantalla de productos")
+    Text("PANTALLA DE PRODUCTOS")
 }

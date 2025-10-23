@@ -5,5 +5,5 @@ import androidx.compose.runtime.Composable
 
 @Composable
 fun ReportesScreen(){
-    Text("pantalla de reportes")
+    Text("PANTALLA DE REPORTES")
 }

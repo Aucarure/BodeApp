@@ -6,5 +6,5 @@ import com.tecsup.bodeapp.navigation.Screen
 
 @Composable
 fun ComprasScreen(){
-    Text("pantalla de compras")
+    Text("PANTALLA DE COMPRAS")
 }
