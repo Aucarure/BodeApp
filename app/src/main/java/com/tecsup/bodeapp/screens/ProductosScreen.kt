@@ -4,6 +4,11 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 
 @Composable
-fun ProductosScreen(){
+fun ProductosScreen(
+    onNavigateToVentas: () -> Unit,
+    onNavigateToHome: () -> Unit,
+    onNavigateToCompras: () -> Unit,
+    onNavigateToReportes: () -> Unit
+) {
     Text("PANTALLA DE PRODUCTOS")
 }
