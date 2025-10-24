@@ -6,6 +6,7 @@ import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
 import com.tecsup.bodeapp.screens.*
 
+
 sealed class Screen(val route: String) {
     object Home : Screen("home")
     object Productos : Screen("productos")
