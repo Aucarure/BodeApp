@@ -17,25 +17,6 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 
-
-
-
-
-
-
-// vista previa
-
-@Preview(showBackground = true, name = "Vista previa ")
-@Composable
-fun HomeScreenPreview() {
-    HomeScreen(
-        onNavigateToProductos = {},
-        onNavigateToVentas = {},
-        onNavigateToCompras = {},
-        onNavigateToReportes = {}
-    )
-}
-
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun HomeScreen(
@@ -62,7 +43,6 @@ fun HomeScreen(
                 .fillMaxSize()
                 .padding(paddingValues)
         ) {
-            // Header azul (solo hasta la mitad de las tarjetas)
             Box(
                 modifier = Modifier
                     .fillMaxWidth()
@@ -72,18 +52,13 @@ fun HomeScreen(
                         shape = RoundedCornerShape(bottomStart = 24.dp, bottomEnd = 24.dp)
                     )
             )
-
-            // Contenido superpuesto
             Column(
                 modifier = Modifier
                     .fillMaxSize()
                     .offset(y = (-100).dp)
                     .padding(horizontal = 24.dp)
             ) {
-                // Título y subtítulo
-                Column(
-                    modifier = Modifier.padding(bottom = 24.dp)
-                ) {
+                Column(modifier = Modifier.padding(bottom = 24.dp)) {
                     Text(
                         text = "BodeApp",
                         fontSize = 32.sp,
@@ -97,8 +72,6 @@ fun HomeScreen(
                         modifier = Modifier.padding(top = 4.dp)
                     )
                 }
-
-                // Tarjetas de estadísticas
                 Row(
                     modifier = Modifier.fillMaxWidth(),
                     horizontalArrangement = Arrangement.spacedBy(12.dp)
@@ -125,10 +98,7 @@ fun HomeScreen(
                         modifier = Modifier.weight(1f)
                     )
                 }
-
                 Spacer(modifier = Modifier.height(32.dp))
-
-                // Accesos Rápidos
                 Text(
                     text = "Accesos Rápidos",
                     fontSize = 20.sp,
@@ -137,14 +107,8 @@ fun HomeScreen(
                 )
 
                 Spacer(modifier = Modifier.height(16.dp))
-
-                // Grid de botones
-                Column(
-                    verticalArrangement = Arrangement.spacedBy(16.dp)
-                ) {
-                    Row(
-                        horizontalArrangement = Arrangement.spacedBy(16.dp)
-                    ) {
+                Column(verticalArrangement = Arrangement.spacedBy(16.dp)) {
+                    Row(horizontalArrangement = Arrangement.spacedBy(16.dp)) {
                         QuickAccessCard(
                             icon = Icons.Default.Category,
                             iconColor = Color(0xFF3B82F6),
@@ -162,9 +126,7 @@ fun HomeScreen(
                             modifier = Modifier.weight(1f)
                         )
                     }
-                    Row(
-                        horizontalArrangement = Arrangement.spacedBy(16.dp)
-                    ) {
+                    Row(horizontalArrangement = Arrangement.spacedBy(16.dp)) {
                         QuickAccessCard(
                             icon = Icons.Default.ShoppingBag,
                             iconColor = Color(0xFF8B5CF6),
@@ -185,10 +147,8 @@ fun HomeScreen(
                 }
 
                 Spacer(modifier = Modifier.height(16.dp))
-
-                // Botón Cierre de Caja
                 Button(
-                    onClick = { },
+                    onClick = onNavigateToReportes,
                     modifier = Modifier
                         .fillMaxWidth()
                         .height(56.dp)
@@ -218,7 +178,6 @@ fun HomeScreen(
         }
     }
 }
-
 @Composable
 fun StatCard(
     icon: ImageVector,
@@ -232,9 +191,7 @@ fun StatCard(
             .height(100.dp)
             .shadow(4.dp, RoundedCornerShape(16.dp)),
         shape = RoundedCornerShape(16.dp),
-        colors = CardDefaults.cardColors(
-            containerColor = Color.White
-        )
+        colors = CardDefaults.cardColors(containerColor = Color.White)
     ) {
         Column(
             modifier = Modifier
@@ -249,11 +206,7 @@ fun StatCard(
                 modifier = Modifier.size(24.dp)
             )
             Column {
-                Text(
-                    text = label,
-                    fontSize = 12.sp,
-                    color = Color.Gray
-                )
+                Text(text = label, fontSize = 12.sp, color = Color.Gray)
                 Text(
                     text = value,
                     fontSize = 18.sp,
@@ -280,9 +233,7 @@ fun QuickAccessCard(
             .height(120.dp)
             .shadow(4.dp, RoundedCornerShape(16.dp)),
         shape = RoundedCornerShape(16.dp),
-        colors = CardDefaults.cardColors(
-            containerColor = Color.White
-        )
+        colors = CardDefaults.cardColors(containerColor = Color.White)
     ) {
         Column(
             modifier = Modifier
@@ -313,5 +264,15 @@ fun QuickAccessCard(
             )
         }
     }
+}
 
+@Preview(showBackground = true, name = "Vista previa HomeScreen")
+@Composable
+fun HomeScreenPreview() {
+    HomeScreen(
+        onNavigateToProductos = {},
+        onNavigateToVentas = {},
+        onNavigateToCompras = {},
+        onNavigateToReportes = {}
+    )
 }

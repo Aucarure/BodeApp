@@ -17,51 +17,30 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-
-data class Compra(
-    val id: Int,
-    val nombreProducto: String,
-    val cantidad: Int,
-    val costoUnitario: Double,
-    val costoTotal: Double,
-    val fecha: String
-)
-
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import androidx.lifecycle.viewmodel.compose.viewModel
+import com.tecsup.bodeapp.data.dao.CompraDao
+import com.tecsup.bodeapp.data.dao.ProductoDao
+import com.tecsup.bodeapp.viewmodel.ComprasViewModel
+import com.tecsup.bodeapp.viewmodel.ComprasViewModelFactory
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun ComprasScreen(
     onNavigateToHome: () -> Unit,
     onNavigateToProductos: () -> Unit,
     onNavigateToVentas: () -> Unit,
-    onNavigateToReportes: () -> Unit
+    onNavigateToReportes: () -> Unit,
+    compraDao: CompraDao,
+    productoDao: ProductoDao
 ) {
+    val viewModel: ComprasViewModel = viewModel(
+        factory = ComprasViewModelFactory(compraDao, productoDao)
+    )
+    val compras by viewModel.comprasDelDia.collectAsStateWithLifecycle()
+    val totalGastado by viewModel.totalGastadoHoy.collectAsStateWithLifecycle()
     var nombreProducto by remember { mutableStateOf("") }
     var cantidad by remember { mutableStateOf("") }
     var costoTotal by remember { mutableStateOf("") }
-
-    // Lista de compras de ejemplo
-    val compras = remember {
-        mutableStateListOf(
-            Compra(
-                id = 1,
-                nombreProducto = "Coca Cola 1.5L (Caja x12)",
-                cantidad = 12,
-                costoUnitario = 5.0,
-                costoTotal = 60.0,
-                fecha = "Hoy"
-            ),
-            Compra(
-                id = 2,
-                nombreProducto = "Leche Gloria 1L (Caja x6)",
-                cantidad = 6,
-                costoUnitario = 4.0,
-                costoTotal = 24.0,
-                fecha = "Hoy"
-            )
-        )
-    }
-
-    val totalGastado = compras.sumOf { it.costoTotal }
 
     Scaffold(
         containerColor = Color(0xFFF0F4FF),
@@ -81,7 +60,6 @@ fun ComprasScreen(
                 .fillMaxSize()
                 .padding(paddingValues)
         ) {
-            // Header morado
             Box(
                 modifier = Modifier
                     .fillMaxWidth()
@@ -92,12 +70,10 @@ fun ComprasScreen(
                     .padding(24.dp)
             ) {
                 Column {
-                    Row(
-                        verticalAlignment = Alignment.CenterVertically
-                    ) {
+                    Row(verticalAlignment = Alignment.CenterVertically) {
                         Icon(
-                            imageVector = Icons.Default.ArrowBack,
-                            contentDescription = "Volver",
+                            imageVector = Icons.Default.ShoppingCart,
+                            contentDescription = "Compras",
                             tint = Color.White,
                             modifier = Modifier.size(24.dp)
                         )
@@ -117,22 +93,17 @@ fun ComprasScreen(
                     )
                 }
             }
-
-            // Contenido scrolleable
             LazyColumn(
                 modifier = Modifier
                     .fillMaxSize()
                     .padding(horizontal = 16.dp, vertical = 16.dp),
                 verticalArrangement = Arrangement.spacedBy(16.dp)
             ) {
-                // Formulario Nueva Compra
                 item {
                     Card(
                         modifier = Modifier.fillMaxWidth(),
                         shape = RoundedCornerShape(16.dp),
-                        colors = CardDefaults.cardColors(
-                            containerColor = Color.White
-                        ),
+                        colors = CardDefaults.cardColors(containerColor = Color.White),
                         elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
                     ) {
                         Column(
@@ -147,29 +118,10 @@ fun ComprasScreen(
                                 color = Color.Black,
                                 modifier = Modifier.padding(bottom = 16.dp)
                             )
-
-                            // Nombre del Producto
-                            Row(
-                                verticalAlignment = Alignment.CenterVertically,
-                                modifier = Modifier.padding(bottom = 8.dp)
-                            ) {
-                                Icon(
-                                    imageVector = Icons.Default.ShoppingBag,
-                                    contentDescription = null,
-                                    tint = Color(0xFF8B5CF6),
-                                    modifier = Modifier.size(20.dp)
-                                )
-                                Spacer(modifier = Modifier.width(8.dp))
-                                Text(
-                                    text = "Nombre del Producto",
-                                    fontSize = 14.sp,
-                                    color = Color.Black
-                                )
-                            }
                             OutlinedTextField(
                                 value = nombreProducto,
                                 onValueChange = { nombreProducto = it },
-                                placeholder = { Text("Ej: Arroz Costeño (Saco 50kg)", fontSize = 14.sp) },
+                                label = { Text("Nombre del producto") },
                                 modifier = Modifier
                                     .fillMaxWidth()
                                     .padding(bottom = 16.dp),
@@ -179,84 +131,50 @@ fun ComprasScreen(
                                     focusedBorderColor = Color(0xFF8B5CF6)
                                 )
                             )
-
-                            // Cantidad
-                            Row(
-                                verticalAlignment = Alignment.CenterVertically,
-                                modifier = Modifier.padding(bottom = 8.dp)
-                            ) {
-                                Icon(
-                                    imageVector = Icons.Default.Tag,
-                                    contentDescription = null,
-                                    tint = Color(0xFF3B82F6),
-                                    modifier = Modifier.size(20.dp)
-                                )
-                                Spacer(modifier = Modifier.width(8.dp))
-                                Text(
-                                    text = "Cantidad",
-                                    fontSize = 14.sp,
-                                    color = Color.Black
-                                )
-                            }
                             OutlinedTextField(
                                 value = cantidad,
                                 onValueChange = { cantidad = it },
-                                placeholder = { Text("0", fontSize = 14.sp) },
+                                label = { Text("Cantidad") },
+                                keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
                                 modifier = Modifier
                                     .fillMaxWidth()
                                     .padding(bottom = 16.dp),
                                 shape = RoundedCornerShape(12.dp),
-                                keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
                                 colors = OutlinedTextFieldDefaults.colors(
                                     unfocusedBorderColor = Color.LightGray,
                                     focusedBorderColor = Color(0xFF3B82F6)
                                 )
                             )
-
-                            // Costo Total
-                            Row(
-                                verticalAlignment = Alignment.CenterVertically,
-                                modifier = Modifier.padding(bottom = 8.dp)
-                            ) {
-                                Icon(
-                                    imageVector = Icons.Default.AttachMoney,
-                                    contentDescription = null,
-                                    tint = Color(0xFF10B981),
-                                    modifier = Modifier.size(20.dp)
-                                )
-                                Spacer(modifier = Modifier.width(8.dp))
-                                Text(
-                                    text = "Costo Total (S/)",
-                                    fontSize = 14.sp,
-                                    color = Color.Black
-                                )
-                            }
                             OutlinedTextField(
                                 value = costoTotal,
                                 onValueChange = { costoTotal = it },
-                                placeholder = { Text("0.00", fontSize = 14.sp) },
+                                label = { Text("Costo Total (S/)") },
+                                keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal),
                                 modifier = Modifier
                                     .fillMaxWidth()
                                     .padding(bottom = 20.dp),
                                 shape = RoundedCornerShape(12.dp),
-                                keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal),
                                 colors = OutlinedTextFieldDefaults.colors(
                                     unfocusedBorderColor = Color.LightGray,
                                     focusedBorderColor = Color(0xFF10B981)
                                 )
                             )
-
-                            // Botón Agregar
                             Button(
                                 onClick = {
+                                    val cantidadInt = cantidad.toIntOrNull() ?: 0
+                                    val costoTotalDouble = costoTotal.toDoubleOrNull() ?: 0.0
 
+                                    if (nombreProducto.isNotBlank() && cantidadInt > 0 && costoTotalDouble > 0.0) {
+                                        viewModel.agregarCompra(nombreProducto, cantidadInt, costoTotalDouble)
+                                        nombreProducto = ""
+                                        cantidad = ""
+                                        costoTotal = ""
+                                    }
                                 },
                                 modifier = Modifier
                                     .fillMaxWidth()
                                     .height(50.dp),
-                                colors = ButtonDefaults.buttonColors(
-                                    containerColor = Color(0xFF8B5CF6)
-                                ),
+                                colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF8B5CF6)),
                                 shape = RoundedCornerShape(12.dp)
                             ) {
                                 Icon(
@@ -275,15 +193,11 @@ fun ComprasScreen(
                         }
                     }
                 }
-
-
                 item {
                     Card(
                         modifier = Modifier.fillMaxWidth(),
                         shape = RoundedCornerShape(16.dp),
-                        colors = CardDefaults.cardColors(
-                            containerColor = Color(0xFFF3F4F6)
-                        )
+                        colors = CardDefaults.cardColors(containerColor = Color(0xFFF3F4F6))
                     ) {
                         Column(
                             modifier = Modifier
@@ -306,6 +220,7 @@ fun ComprasScreen(
                     }
                 }
 
+                // Historial de compras
                 item {
                     Text(
                         text = "Historial de Compras",
@@ -321,9 +236,7 @@ fun ComprasScreen(
                     Card(
                         modifier = Modifier.fillMaxWidth(),
                         shape = RoundedCornerShape(12.dp),
-                        colors = CardDefaults.cardColors(
-                            containerColor = Color.White
-                        ),
+                        colors = CardDefaults.cardColors(containerColor = Color.White),
                         elevation = CardDefaults.cardElevation(defaultElevation = 1.dp)
                     ) {
                         Row(
@@ -333,9 +246,7 @@ fun ComprasScreen(
                             horizontalArrangement = Arrangement.SpaceBetween,
                             verticalAlignment = Alignment.CenterVertically
                         ) {
-                            Column(
-                                modifier = Modifier.weight(1f)
-                            ) {
+                            Column(modifier = Modifier.weight(1f)) {
                                 Text(
                                     text = compra.nombreProducto,
                                     fontSize = 16.sp,
@@ -343,21 +254,13 @@ fun ComprasScreen(
                                     color = Color.Black
                                 )
                                 Text(
-                                    text = "Cantidad: ${compra.cantidad} unidades",
+                                    text = "Cantidad: ${compra.cantidad}",
                                     fontSize = 13.sp,
                                     color = Color.Gray,
                                     modifier = Modifier.padding(top = 4.dp)
                                 )
-                                Text(
-                                    text = compra.fecha,
-                                    fontSize = 12.sp,
-                                    color = Color.Gray,
-                                    modifier = Modifier.padding(top = 2.dp)
-                                )
                             }
-                            Column(
-                                horizontalAlignment = Alignment.End
-                            ) {
+                            Column(horizontalAlignment = Alignment.End) {
                                 Text(
                                     text = "S/ ${String.format("%.2f", compra.costoTotal)}",
                                     fontSize = 18.sp,
@@ -374,11 +277,7 @@ fun ComprasScreen(
                         }
                     }
                 }
-
-                // Espacio al final
-                item {
-                    Spacer(modifier = Modifier.height(16.dp))
-                }
+                item { Spacer(modifier = Modifier.height(16.dp)) }
             }
         }
     }
