@@ -14,6 +14,7 @@ class ComprasViewModel(
     private val compraDao: CompraDao,
     private val productoDao: ProductoDao
 ) : ViewModel() {
+
     private val hoy = Calendar.getInstance().apply {
         set(Calendar.HOUR_OF_DAY, 0)
         set(Calendar.MINUTE, 0)
@@ -23,29 +24,84 @@ class ComprasViewModel(
 
     val comprasDelDia: StateFlow<List<Compra>> = compraDao.obtenerComprasDelDia(hoy)
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), emptyList())
+
     val totalGastadoHoy: StateFlow<Double> = compraDao.obtenerTotalComprasDelDia(hoy)
         .map { it ?: 0.0 }
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), 0.0)
+
+    // Estados para mensajes de error/éxito
+    private val _mensajeError = MutableStateFlow<String?>(null)
+    val mensajeError: StateFlow<String?> = _mensajeError
+
+    private val _compraExitosa = MutableStateFlow(false)
+    val compraExitosa: StateFlow<Boolean> = _compraExitosa
+
+    /**
+     * Agregar una compra y actualizar el stock del producto si existe
+     * @param nombre Nombre del producto comprado
+     * @param cantidad Cantidad comprada
+     * @param costoTotal Costo total de la compra
+     */
     fun agregarCompra(nombre: String, cantidad: Int, costoTotal: Double) {
         viewModelScope.launch {
-            val costoUnitario = if (cantidad > 0) costoTotal / cantidad else 0.0
+            try {
+                // Validaciones
+                if (nombre.isBlank()) {
+                    _mensajeError.value = "El nombre del producto no puede estar vacío"
+                    return@launch
+                }
 
-            val compra = Compra(
-                id = 0,
-                nombreProducto = nombre,
-                cantidad = cantidad,
-                costoUnitario = costoUnitario,
-                costoTotal = costoTotal,
-                fecha = System.currentTimeMillis()
-            )
-            compraDao.insertar(compra)
-            val producto = productoDao.obtenerTodos().firstOrNull()?.find {
-                it.nombre.equals(nombre, ignoreCase = true)
-            }
-            producto?.let {
-                productoDao.aumentarStock(it.id, cantidad)
+                if (cantidad <= 0) {
+                    _mensajeError.value = "La cantidad debe ser mayor a 0"
+                    return@launch
+                }
+
+                if (costoTotal <= 0.0) {
+                    _mensajeError.value = "El costo total debe ser mayor a 0"
+                    return@launch
+                }
+
+                val costoUnitario = costoTotal / cantidad
+
+                // Registrar la compra
+                val compra = Compra(
+                    id = 0,
+                    nombreProducto = nombre.trim(),
+                    cantidad = cantidad,
+                    costoUnitario = costoUnitario,
+                    costoTotal = costoTotal,
+                    fecha = System.currentTimeMillis()
+                )
+                compraDao.insertar(compra)
+
+                // Intentar actualizar el stock si el producto existe
+                val productos = productoDao.obtenerTodos().firstOrNull() ?: emptyList()
+                val producto = productos.find {
+                    it.nombre.trim().equals(nombre.trim(), ignoreCase = true)
+                }
+
+                if (producto != null) {
+                    // Si el producto existe, aumentar su stock
+                    productoDao.aumentarStock(producto.id, cantidad)
+                } else {
+                    // Si no existe, informar al usuario (opcional)
+                    _mensajeError.value = "Compra registrada. El producto no existe en inventario."
+                }
+
+                _compraExitosa.value = true
+
+            } catch (e: Exception) {
+                _mensajeError.value = "Error al registrar compra: ${e.message}"
             }
         }
+    }
+
+    /**
+     * Limpiar mensajes de error/éxito
+     */
+    fun limpiarMensajes() {
+        _mensajeError.value = null
+        _compraExitosa.value = false
     }
 }
 
@@ -58,6 +114,6 @@ class ComprasViewModelFactory(
             @Suppress("UNCHECKED_CAST")
             return ComprasViewModel(compraDao, productoDao) as T
         }
-        throw IllegalArgumentException("error")
+        throw IllegalArgumentException("Unknown ViewModel class: ${modelClass.name}")
     }
 }

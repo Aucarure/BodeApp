@@ -14,7 +14,6 @@ sealed class Screen(val route: String) {
     object Ventas : Screen("ventas")
     object Compras : Screen("compras")
     object Reportes : Screen("reportes")
-    object CierreCaja : Screen("cierrecaja")
 }
 
 @Composable
@@ -22,6 +21,8 @@ fun AppNavigation() {
     val navController = rememberNavController()
     val context = LocalContext.current
     val db = AppDatabase.getInstance(context)
+
+    // Obtener DAOs una sola vez
     val productoDao = db.productoDao()
     val ventaDao = db.ventaDao()
     val compraDao = db.compraDao()
@@ -55,7 +56,7 @@ fun AppNavigation() {
                 onNavigateToCompras = { navController.navigate(Screen.Compras.route) },
                 onNavigateToReportes = { navController.navigate(Screen.Reportes.route) },
                 productoDao = productoDao,
-                ventaDao = ventaDao  // ← AGREGADO
+                ventaDao = ventaDao
             )
         }
 
@@ -76,14 +77,11 @@ fun AppNavigation() {
                 onNavigateToProductos = { navController.navigate(Screen.Productos.route) },
                 onNavigateToVentas = { navController.navigate(Screen.Ventas.route) },
                 onNavigateToCompras = { navController.navigate(Screen.Compras.route) },
-                ventaDao = ventaDao,      // ← AGREGADO
-                compraDao = compraDao,    // ← AGREGADO
-                productoDao = productoDao// ← AGREGADO
+                onNavigateToReportes = { /* Ya estamos aquí */ },
+                ventaDao = ventaDao,
+                compraDao = compraDao,
+                productoDao = productoDao
             )
-        }
-
-        composable(Screen.CierreCaja.route) {
-            CierreCajaScreen()
         }
     }
 }
