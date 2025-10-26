@@ -75,4 +75,9 @@ dependencies {
     implementation("androidx.compose.ui:ui-tooling-preview:1.7.0")
     debugImplementation("androidx.compose.ui:ui-tooling:1.7.0")
     implementation("androidx.compose.material:material-icons-extended:1.7.5")
+
+    // Para generar PDFs
+    implementation("com.itextpdf:itext7-core:7.2.5")
+    // O alternativamente (más simple)
+    implementation("androidx.print:print:1.0.0")
 }

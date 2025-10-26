@@ -1,7 +1,6 @@
 package com.tecsup.bodeapp.data.dao
 
 import androidx.room.*
-import com.tecsup.bodeapp.model.Producto
 import com.tecsup.bodeapp.model.Venta
 import kotlinx.coroutines.flow.Flow
 
@@ -29,16 +28,25 @@ interface VentaDao {
     @Query("SELECT nombreProducto, SUM(cantidad) as totalVendido FROM ventas GROUP BY nombreProducto ORDER BY totalVendido DESC LIMIT 5")
     fun obtenerProductosMasVendidos(): Flow<List<ProductoVendido>>
 
-    @Query("SELECT * FROM productos")
-    suspend fun getAllProductos(): List<Producto>
-
     @Query("SELECT SUM(total) FROM ventas")
     suspend fun obtenerTotalVentas(): Double?
 
+    // ====== NUEVAS CONSULTAS PARA FILTROS POR RANGO ======
 
+    @Query("SELECT * FROM ventas WHERE fecha >= :inicio AND fecha <= :fin ORDER BY fecha DESC")
+    fun obtenerVentasPorRango(inicio: Long, fin: Long): Flow<List<Venta>>
 
+    @Query("SELECT SUM(total) FROM ventas WHERE fecha >= :inicio AND fecha <= :fin")
+    fun obtenerTotalVentasPorRango(inicio: Long, fin: Long): Flow<Double?>
 
+    @Query("SELECT COUNT(*) FROM ventas WHERE fecha >= :inicio AND fecha <= :fin")
+    fun contarVentasPorRango(inicio: Long, fin: Long): Flow<Int>
 
+    @Query("SELECT nombreProducto, SUM(cantidad) as totalVendido FROM ventas WHERE fecha >= :inicio AND fecha <= :fin GROUP BY nombreProducto ORDER BY totalVendido DESC LIMIT 10")
+    fun obtenerProductosMasVendidosPorRango(inicio: Long, fin: Long): Flow<List<ProductoVendido>>
+
+    @Query("SELECT AVG(total) FROM ventas WHERE fecha >= :inicio AND fecha <= :fin")
+    fun obtenerPromedioVentasPorRango(inicio: Long, fin: Long): Flow<Double?>
 }
 
 data class ProductoVendido(

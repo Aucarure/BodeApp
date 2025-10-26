@@ -21,6 +21,9 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.tecsup.bodeapp.data.dao.CompraDao
+import com.tecsup.bodeapp.data.dao.ProductoDao
+import com.tecsup.bodeapp.data.dao.VentaDao
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
@@ -35,7 +38,10 @@ fun ReportesScreen(
     onNavigateToProductos: () -> Unit = {},
     onNavigateToVentas: () -> Unit = {},
     onNavigateToCompras: () -> Unit = {},
-    onNavigateToReportes: () -> Unit = {}
+    onNavigateToReportes: () -> Unit = {},
+    ventaDao: VentaDao,
+    compraDao: CompraDao,
+    productoDao: ProductoDao
 ) {
     val context = LocalContext.current
     var fechaHoraActual by remember { mutableStateOf("") }

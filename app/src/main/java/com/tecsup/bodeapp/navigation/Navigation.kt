@@ -5,7 +5,6 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
-
 import com.tecsup.bodeapp.data.database.AppDatabase
 import com.tecsup.bodeapp.screens.*
 
@@ -17,12 +16,14 @@ sealed class Screen(val route: String) {
     object Reportes : Screen("reportes")
     object CierreCaja : Screen("cierrecaja")
 }
+
 @Composable
 fun AppNavigation() {
     val navController = rememberNavController()
     val context = LocalContext.current
     val db = AppDatabase.getInstance(context)
     val productoDao = db.productoDao()
+    val ventaDao = db.ventaDao()
     val compraDao = db.compraDao()
 
     NavHost(
@@ -37,6 +38,7 @@ fun AppNavigation() {
                 onNavigateToReportes = { navController.navigate(Screen.Reportes.route) }
             )
         }
+
         composable(Screen.Productos.route) {
             ProductosScreen(
                 onNavigateToHome = { navController.navigate(Screen.Home.route) },
@@ -52,10 +54,11 @@ fun AppNavigation() {
                 onNavigateToProductos = { navController.navigate(Screen.Productos.route) },
                 onNavigateToCompras = { navController.navigate(Screen.Compras.route) },
                 onNavigateToReportes = { navController.navigate(Screen.Reportes.route) },
-                productoDao = productoDao
-
+                productoDao = productoDao,
+                ventaDao = ventaDao  // ← AGREGADO
             )
         }
+
         composable(Screen.Compras.route) {
             ComprasScreen(
                 onNavigateToHome = { navController.navigate(Screen.Home.route) },
@@ -66,14 +69,19 @@ fun AppNavigation() {
                 productoDao = productoDao
             )
         }
+
         composable(Screen.Reportes.route) {
             ReportesScreen(
                 onNavigateToHome = { navController.navigate(Screen.Home.route) },
                 onNavigateToProductos = { navController.navigate(Screen.Productos.route) },
                 onNavigateToVentas = { navController.navigate(Screen.Ventas.route) },
-                onNavigateToCompras = { navController.navigate(Screen.Compras.route) }
+                onNavigateToCompras = { navController.navigate(Screen.Compras.route) },
+                ventaDao = ventaDao,      // ← AGREGADO
+                compraDao = compraDao,    // ← AGREGADO
+                productoDao = productoDao// ← AGREGADO
             )
         }
+
         composable(Screen.CierreCaja.route) {
             CierreCajaScreen()
         }

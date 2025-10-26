@@ -14,10 +14,10 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.tecsup.bodeapp.data.dao.ProductoDao
-import com.tecsup.bodeapp.model.Producto
 import com.tecsup.bodeapp.viewmodel.VentasViewModel
 import com.tecsup.bodeapp.viewmodel.VentasViewModelFactory
 import androidx.lifecycle.viewmodel.compose.viewModel
+import com.tecsup.bodeapp.data.dao.VentaDao
 
 @Composable
 fun VentasScreen(
@@ -25,7 +25,8 @@ fun VentasScreen(
     onNavigateToProductos: () -> Unit,
     onNavigateToCompras: () -> Unit,
     onNavigateToReportes: () -> Unit,
-    productoDao: ProductoDao
+    productoDao: ProductoDao,
+    ventaDao: VentaDao
 ) {
     val viewModel: VentasViewModel = viewModel(
         factory = VentasViewModelFactory(productoDao)
