@@ -1,6 +1,7 @@
 package com.tecsup.bodeapp.data.dao
 
 import androidx.room.*
+import com.tecsup.bodeapp.model.Producto
 import com.tecsup.bodeapp.model.Venta
 import kotlinx.coroutines.flow.Flow
 
@@ -27,6 +28,17 @@ interface VentaDao {
 
     @Query("SELECT nombreProducto, SUM(cantidad) as totalVendido FROM ventas GROUP BY nombreProducto ORDER BY totalVendido DESC LIMIT 5")
     fun obtenerProductosMasVendidos(): Flow<List<ProductoVendido>>
+
+    @Query("SELECT * FROM productos")
+    suspend fun getAllProductos(): List<Producto>
+
+    @Query("SELECT SUM(total) FROM ventas")
+    suspend fun obtenerTotalVentas(): Double?
+
+
+
+
+
 }
 
 data class ProductoVendido(

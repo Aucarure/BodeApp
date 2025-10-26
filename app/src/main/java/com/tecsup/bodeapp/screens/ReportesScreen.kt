@@ -239,7 +239,6 @@ fun InfoCard(
         }
     }
 }
-//  Generador de pdf
 fun generarPDF(context: Context, uri: Uri) {
     CoroutineScope(Dispatchers.IO).launch {
         val outputStream: OutputStream? = context.contentResolver.openOutputStream(uri)

@@ -219,8 +219,6 @@ fun ComprasScreen(
                         }
                     }
                 }
-
-                // Historial de compras
                 item {
                     Text(
                         text = "Historial de Compras",
@@ -230,8 +228,6 @@ fun ComprasScreen(
                         modifier = Modifier.padding(vertical = 8.dp)
                     )
                 }
-
-                // Lista de compras
                 items(compras) { compra ->
                     Card(
                         modifier = Modifier.fillMaxWidth(),

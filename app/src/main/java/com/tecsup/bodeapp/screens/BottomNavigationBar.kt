@@ -22,8 +22,6 @@ fun BottomNavigationBarPreview() {
         onNavigateToReportes = {}
     )
 }
-
-// navegacion
 @Composable
 fun BottomNavigationBar(
     selectedItem: Int,
@@ -32,12 +30,10 @@ fun BottomNavigationBar(
     onNavigateToVentas: () -> Unit,
     onNavigateToCompras: () -> Unit,
     onNavigateToReportes: () -> Unit
-) {
-    NavigationBar(
+) { NavigationBar(
         containerColor = Color.White,
         tonalElevation = 8.dp
-    ) {
-        NavigationBarItem(
+    ) { NavigationBarItem(
             icon = { Icon(Icons.Default.Home, contentDescription = "Inicio") },
             label = { Text("Inicio", fontSize = 12.sp) },
             selected = selectedItem == 0,

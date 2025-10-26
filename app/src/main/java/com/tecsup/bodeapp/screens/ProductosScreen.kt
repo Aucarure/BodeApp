@@ -23,6 +23,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.tecsup.bodeapp.data.database.AppDatabase
 import com.tecsup.bodeapp.model.Producto
+import com.tecsup.bodeapp.navigation.Screen
 import kotlinx.coroutines.launch
 @Composable
 fun ProductosScreen(
