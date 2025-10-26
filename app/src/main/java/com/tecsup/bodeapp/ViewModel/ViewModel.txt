@@ -1,6 +1,6 @@
 ViewModel sirve para manejar la
 lógica y los datos de la interfaz
-de usuario (UI) sin que esa lógica
-esté metida dentro de tus pantallas
+de usuario  sin que esa lógica
+esté metida dentro en las pantallas
 ya que si se cierra o gire la pantalla
 no se perdera los el valor del contador.
