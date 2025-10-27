@@ -1,8 +1,10 @@
 package com.tecsup.bodeapp.screens
+
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material3.*
@@ -11,13 +13,15 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.input.KeyboardType
+import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.lifecycle.viewmodel.compose.viewModel
 import com.tecsup.bodeapp.data.dao.ProductoDao
 import com.tecsup.bodeapp.model.Producto
 import com.tecsup.bodeapp.viewmodel.VentasViewModel
 import com.tecsup.bodeapp.viewmodel.VentasViewModelFactory
-import androidx.lifecycle.viewmodel.compose.viewModel
 
 @Composable
 fun VentasScreen(
@@ -27,11 +31,12 @@ fun VentasScreen(
     onNavigateToReportes: () -> Unit,
     productoDao: ProductoDao
 ) {
-    val viewModel: VentasViewModel = viewModel(
-        factory = VentasViewModelFactory(productoDao)
-    )
-
+    val viewModel: VentasViewModel = viewModel(factory = VentasViewModelFactory(productoDao))
     val productos by viewModel.productos.collectAsState()
+    var productoSeleccionado by remember { mutableStateOf<Producto?>(null) }
+    var cantidad by remember { mutableStateOf("") }
+    var mostrarConfirmacion by remember { mutableStateOf(false) }
+    var alertaSinStock by remember { mutableStateOf(false) }
 
     Column(
         modifier = Modifier
@@ -39,7 +44,7 @@ fun VentasScreen(
             .background(Color(0xFFF7F7F7)),
         verticalArrangement = Arrangement.SpaceBetween
     ) {
-        // 🔹 Encabezado verde
+        //Encabezado
         Card(
             shape = MaterialTheme.shapes.medium,
             colors = CardDefaults.cardColors(containerColor = Color(0xFF2E7D32)),
@@ -63,7 +68,7 @@ fun VentasScreen(
             }
         }
 
-        // 🔹 Lista de productos o mensaje vacío
+        //Lista de productos
         Box(
             modifier = Modifier
                 .fillMaxWidth()
@@ -86,11 +91,77 @@ fun VentasScreen(
                         val producto = productos[index]
                         ProductoCard(
                             producto = producto,
-                            onAgregarClick = { viewModel.venderProducto(producto) }
+                            onAgregarClick = {
+                                if (producto.stock == 0) {
+                                    alertaSinStock = true
+                                } else {
+                                    productoSeleccionado = producto
+                                    cantidad = ""
+                                    mostrarConfirmacion = true
+                                }
+                            }
                         )
                     }
                 }
             }
+        }
+
+        // sin stock
+        if (alertaSinStock) {
+            AlertDialog(
+                onDismissRequest = { alertaSinStock = false },
+                confirmButton = {
+                    TextButton(onClick = { alertaSinStock = false }) {
+                        Text("OK")
+                    }
+                },
+                title = { Text("Sin stock") },
+                text = { Text("No hay unidades disponibles para este producto.") }
+            )
+        }
+
+        // confirmación de venta
+        if (mostrarConfirmacion && productoSeleccionado != null) {
+            AlertDialog(
+                onDismissRequest = { mostrarConfirmacion = false },
+                confirmButton = {
+                    TextButton(onClick = {
+                        val cantidadInt = cantidad.toIntOrNull() ?: 0
+                        val producto = productoSeleccionado!!
+                        if (cantidadInt in 1..producto.stock) {
+                            // Llamada compatible con la firma existente venderProducto(producto)
+                            repeat(cantidadInt) { viewModel.venderProducto(producto) }
+                            mostrarConfirmacion = false
+                        } else {
+                            alertaSinStock = true
+                            mostrarConfirmacion = false
+                        }
+                    }) {
+                        Text("Vender")
+                    }
+                },
+                dismissButton = {
+                    TextButton(onClick = { mostrarConfirmacion = false }) {
+                        Text("Cancelar")
+                    }
+                },
+                title = { Text("Confirmar venta") },
+                text = {
+                    Column {
+                        Text("¿Cuántas unidades deseas vender de '${productoSeleccionado!!.nombre}'?")
+                        OutlinedTextField(
+                            value = cantidad,
+                            onValueChange = { cantidad = it },
+                            label = { Text("Cantidad") },
+                            singleLine = true,
+                            keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .padding(top = 8.dp)
+                        )
+                    }
+                }
+            )
         }
 
         // 🔹 Barra inferior
@@ -104,11 +175,13 @@ fun VentasScreen(
         )
     }
 }
+
 @Composable
 fun ProductoCard(
-    producto: com.tecsup.bodeapp.model.Producto,
+    producto: Producto,
     onAgregarClick: () -> Unit
 ) {
+    val sinStock = producto.stock == 0
     Card(
         shape = RoundedCornerShape(16.dp),
         colors = CardDefaults.cardColors(containerColor = Color.White),
@@ -132,7 +205,7 @@ fun ProductoCard(
                 )
                 Text(
                     text = "Stock: ${producto.stock} unidades",
-                    color = Color.Gray,
+                    color = if (sinStock) Color.Red else Color.Gray,
                     fontSize = 13.sp
                 )
                 Text(
@@ -144,16 +217,25 @@ fun ProductoCard(
             }
             IconButton(
                 onClick = onAgregarClick,
+                enabled = !sinStock,
                 modifier = Modifier
                     .size(40.dp)
-                    .background(Color(0xFF2E7D32), shape = RoundedCornerShape(12.dp))
+                    .background(
+                        if (sinStock) Color.LightGray else Color(0xFF2E7D32),
+                        shape = RoundedCornerShape(12.dp)
+                    )
             ) {
                 Icon(
                     imageVector = Icons.Default.Add,
                     contentDescription = "Agregar producto",
-                    tint = Color.White
+                    tint = if (sinStock) Color.Gray else Color.White
                 )
             }
         }
     }
+}
+@Preview(showBackground = true)
+@Composable
+fun VentasScreenPreview() {
+    ReportesScreen()
 }
