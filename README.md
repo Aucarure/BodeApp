@@ -1,14 +1,44 @@
-# 📦 BodeApp
+📦 BodeApp
 
-Aplicación móvil desarrollada en **Kotlin + Jetpack Compose** para el control de ventas, inventario y compras de pequeñas bodegas.
+Aplicación móvil desarrollada en Kotlin + Jetpack Compose, creada para ayudar a los dueños de pequeñas bodegas a llevar el control de sus ventas, compras e inventario.
+El diseño sigue las guías de Material Design 3, priorizando la simplicidad, la claridad y la facilidad de uso.
 
-## 🧩 Día 1 – Planificación y Diseño
-- Prototipo creado en **Figma**: https://www.figma.com/make/dXJQCmYIznPlRQO4Yl96BZ/BodeApp-Prototipo-M%C3%B3vil?node-id=0-4&t=BVjS66MHEfYfJSoP-1
-- Funciones principales: registro de productos, ventas diarias, compras, cierre de caja y reportes.
+🎨 Diseño y prototipo
+
+Prototipo elaborado en Figma, con una interfaz limpia y moderna.
+🔗 Ver prototipo:
+https://deer-ocean-34446870.figma.site/
 
 
-## 💻 Herramientas
-- Android Studio
-- Kotlin + Jetpack Compose (Material 3)
-- Git/GitHub
-- Room / SQLite
+🚀 Funcionalidades principales
+
+📦 Registro de productos con nombre, precio y stock inicial.
+
+💰 Registro de ventas con cálculo automático del subtotal y actualización del inventario.
+
+🛒 Registro de compras e insumos.
+
+📊 Cierre de caja con resumen de ventas, compras y utilidad del día.
+
+🔍 Filtros por producto y fecha.
+
+✅ Validaciones que impiden vender sin stock.
+
+🧠 Descripción técnica
+
+  Lenguaje: Kotlin
+  
+  Framework: Jetpack Compose 
+  
+  Base de datos local: Room / SQLite
+  
+  IDE: Android Studio
+
+
+Estructura del proyecto:
+
+ui/          → Pantallas y componentes visuales  
+model/       → Clases de datos (Producto, Venta, Compra)  
+data/        → Base de datos local y DAOs  
+navigation/  → Control de navegación entre pantallas  
+util/        → Funciones auxiliares
