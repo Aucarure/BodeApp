@@ -12,7 +12,6 @@ data class HomeUiState(
     val totalProductos: Int = 0,
     val productosStockBajo: Int = 0
 )
-
 class HomeViewModel(
     private val productoDao: ProductoDao,
     private val ventaDao: VentaDao
@@ -20,7 +19,6 @@ class HomeViewModel(
 
     private val _uiState = MutableStateFlow(HomeUiState())
     val uiState: StateFlow<HomeUiState> = _uiState.asStateFlow()
-
     init {
         cargarDatos()
     }
@@ -34,16 +32,21 @@ class HomeViewModel(
                 set(Calendar.MILLISECOND, 0)
             }
             val inicioDelDia = calendar.timeInMillis
-
+            val totalVentasFlow = ventaDao.obtenerTotalVentasDelDia(inicioDelDia)
+                .map { it ?: 0.0 }
+            val totalProductosFlow = productoDao.contarProductos()
+                .map { it ?: 0 }
+            val stockBajoFlow = productoDao.obtenerStockBajo()
+                .map { it.size }
             combine(
-                ventaDao.obtenerTotalVentasDelDia(inicioDelDia),
-                productoDao.contarProductos(),
-                productoDao.obtenerStockBajo()
-            ) { totalVentasHoy, totalProductos, productosStockBajo ->
+                totalVentasFlow,
+                totalProductosFlow,
+                stockBajoFlow
+            ) { totalVentas, totalProductos, stockBajo ->
                 HomeUiState(
-                    totalVentasHoy = totalVentasHoy ?: 0.0,
+                    totalVentasHoy = totalVentas,
                     totalProductos = totalProductos,
-                    productosStockBajo = productosStockBajo.size
+                    productosStockBajo = stockBajo
                 )
             }.collect { estado ->
                 _uiState.value = estado
@@ -51,10 +54,6 @@ class HomeViewModel(
         }
     }
 }
-
-
-
-
 class HomeViewModelFactory(
     private val productoDao: ProductoDao,
     private val ventaDao: VentaDao

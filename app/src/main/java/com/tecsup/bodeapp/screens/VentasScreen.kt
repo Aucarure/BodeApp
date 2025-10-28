@@ -67,8 +67,6 @@ fun VentasScreen(
                 )
             }
         }
-
-        //Lista de productos
         Box(
             modifier = Modifier
                 .fillMaxWidth()
@@ -163,8 +161,6 @@ fun VentasScreen(
                 }
             )
         }
-
-        // 🔹 Barra inferior
         BottomNavigationBar(
             selectedItem = 2,
             onNavigateToHome = onNavigateToHome,
@@ -233,9 +229,4 @@ fun ProductoCard(
             }
         }
     }
-}
-@Preview(showBackground = true)
-@Composable
-fun VentasScreenPreview() {
-    ReportesScreen()
 }

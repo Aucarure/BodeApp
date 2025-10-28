@@ -23,7 +23,6 @@ class VentasViewModel(
         }
     }
 }
-
 class VentasViewModelFactory(
     private val productoDao: ProductoDao
 ) : ViewModelProvider.Factory {
