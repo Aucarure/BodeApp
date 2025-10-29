@@ -1,4 +1,5 @@
 package com.tecsup.bodeapp.screens
+
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -13,14 +14,13 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.tecsup.bodeapp.data.database.AppDatabase
-import com.tecsup.bodeapp.navigation.Screen
 import com.tecsup.bodeapp.viewmodel.HomeViewModel
 import com.tecsup.bodeapp.viewmodel.HomeViewModelFactory
+
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun HomeScreen(
@@ -39,6 +39,7 @@ fun HomeScreen(
     )
 
     val uiState by homeViewModel.uiState.collectAsState()
+
     Scaffold(
         containerColor = Color(0xFFF0F4FF),
         bottomBar = {
@@ -52,73 +53,104 @@ fun HomeScreen(
             )
         }
     ) { paddingValues ->
-        Column(
+        Box(
             modifier = Modifier
                 .fillMaxSize()
                 .padding(paddingValues)
         ) {
+            // ENCABEZADO AZUL (Fijo)
             Box(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .height(200.dp)
+                    .height(180.dp)
                     .background(
                         color = Color(0xFF2563EB),
                         shape = RoundedCornerShape(bottomStart = 24.dp, bottomEnd = 24.dp)
-                    ))
-            Column(
-                modifier = Modifier
-                    .fillMaxSize()
-                    .offset(y = (-100).dp)
-                    .padding(horizontal = 24.dp)
+                    )
+            )
+
+            // CONTENIDO CON SCROLL
+            androidx.compose.foundation.lazy.LazyColumn(
+                modifier = Modifier.fillMaxSize(),
+                contentPadding = PaddingValues(horizontal = 20.dp, vertical = 16.dp)
             ) {
-                Column(modifier = Modifier.padding(bottom = 24.dp)) {
+                // Espaciador para el header
+                item {
+                    Spacer(modifier = Modifier.height(16.dp))
+                }
+
+                // TÍTULO Y SUBTÍTULO
+                item {
+                    Column(modifier = Modifier.padding(bottom = 20.dp)) {
+                        Text(
+                            text = "BodeApp",
+                            fontSize = 28.sp,
+                            fontWeight = FontWeight.Bold,
+                            color = Color.White
+                        )
+                        Text(
+                            text = "Gestiona tu bodega fácilmente",
+                            fontSize = 14.sp,
+                            color = Color.White.copy(alpha = 0.9f),
+                            modifier = Modifier.padding(top = 4.dp)
+                        )
+                    }
+                }
+
+                // TARJETAS DE ESTADÍSTICAS
+                item {
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.spacedBy(10.dp)
+                    ) {
+                        StatCard(
+                            icon = Icons.Default.TrendingUp,
+                            iconColor = Color(0xFF10B981),
+                            label = "Ventas Hoy",
+                            value = "S/ ${"%,.2f".format(uiState.totalVentasHoy)}",
+                            modifier = Modifier.weight(1f)
+                        )
+                        StatCard(
+                            icon = Icons.Default.Inventory2,
+                            iconColor = Color(0xFF3B82F6),
+                            label = "Productos",
+                            value = uiState.totalProductos.toString(),
+                            modifier = Modifier.weight(1f)
+                        )
+                        StatCard(
+                            icon = Icons.Default.Error,
+                            iconColor = Color(0xFFEF4444),
+                            label = "Stock Bajo",
+                            value = uiState.productosStockBajo.toString(),
+                            modifier = Modifier.weight(1f)
+                        )
+                    }
+                }
+
+                item {
+                    Spacer(modifier = Modifier.height(24.dp))
+                }
+
+                // TÍTULO ACCESOS RÁPIDOS
+                item {
                     Text(
-                        text = "BodeApp",
-                        fontSize = 32.sp,
-                        fontWeight = FontWeight.Bold,
-                        color = Color.White
+                        text = "Accesos Rápidos",
+                        fontSize = 18.sp,
+                        fontWeight = FontWeight.SemiBold,
+                        color = Color.Black
                     )
-                    Text(
-                        text = "Gestiona tu bodega fácilmente",
-                        fontSize = 16.sp,
-                        color = Color.White.copy(alpha = 0.9f),
-                        modifier = Modifier.padding(top = 4.dp)
-                    ) }
-                Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.spacedBy(12.dp)
-                ) {
-                    StatCard(
-                        icon = Icons.Default.TrendingUp,
-                        iconColor = Color(0xFF10B981),
-                        label = "Ventas Hoy",
-                        value = "S/ ${"%,.2f".format(uiState.totalVentasHoy)}",
-                        modifier = Modifier.weight(1f)
-                    )
-                    StatCard(
-                        icon = Icons.Default.Inventory2,
-                        iconColor = Color(0xFF3B82F6),
-                        label = "Productos",
-                        value = uiState.totalProductos.toString(),
-                        modifier = Modifier.weight(1f)
-                    )
-                    StatCard(
-                        icon = Icons.Default.Error,
-                        iconColor = Color(0xFFEF4444),
-                        label = "Stock Bajo",
-                        value = uiState.productosStockBajo.toString(),
-                        modifier = Modifier.weight(1f)
-                    ) }
-                Spacer(modifier = Modifier.height(32.dp))
-                Text(
-                    text = "Accesos Rápidos",
-                    fontSize = 20.sp,
-                    fontWeight = FontWeight.SemiBold,
-                    color = Color.Black
-                )
-                Spacer(modifier = Modifier.height(16.dp))
-                Column(verticalArrangement = Arrangement.spacedBy(16.dp)) {
-                    Row(horizontalArrangement = Arrangement.spacedBy(16.dp)) {
+                }
+
+                item {
+                    Spacer(modifier = Modifier.height(12.dp))
+                }
+
+                // FILA 1 DE ACCESOS RÁPIDOS
+                item {
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.spacedBy(12.dp)
+                    ) {
                         QuickAccessCard(
                             icon = Icons.Default.Category,
                             iconColor = Color(0xFF3B82F6),
@@ -136,7 +168,18 @@ fun HomeScreen(
                             modifier = Modifier.weight(1f)
                         )
                     }
-                    Row(horizontalArrangement = Arrangement.spacedBy(16.dp)) {
+                }
+
+                item {
+                    Spacer(modifier = Modifier.height(12.dp))
+                }
+
+                // FILA 2 DE ACCESOS RÁPIDOS
+                item {
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.spacedBy(12.dp)
+                    ) {
                         QuickAccessCard(
                             icon = Icons.Default.ShoppingBag,
                             iconColor = Color(0xFF8B5CF6),
@@ -153,33 +196,46 @@ fun HomeScreen(
                             onClick = onNavigateToReportes,
                             modifier = Modifier.weight(1f)
                         )
-                    } }
-                Spacer(modifier = Modifier.height(16.dp))
-                Button(
-                    onClick = onNavigateToReportes,
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .height(56.dp)
-                        .shadow(4.dp, RoundedCornerShape(16.dp)),
-                    colors = ButtonDefaults.buttonColors(
-                        containerColor = Color(0xFF2563EB)
-                    ),
-                    shape = RoundedCornerShape(16.dp)
-                ) {
-                    Icon(
-                        imageVector = Icons.Default.AccountBalance,
-                        contentDescription = null,
-                        tint = Color.White,
-                        modifier = Modifier.size(24.dp)
-                    )
-                    Spacer(modifier = Modifier.width(8.dp))
-                    Text(
-                        text = "Cierre de Caja",
-                        fontSize = 18.sp,
-                        fontWeight = FontWeight.SemiBold,
-                        color = Color.White
-                    ) }
-                Spacer(modifier = Modifier.height(24.dp))
+                    }
+                }
+
+                item {
+                    Spacer(modifier = Modifier.height(20.dp))
+                }
+
+                // BOTÓN CIERRE DE CAJA
+                item {
+                    Button(
+                        onClick = onNavigateToReportes,
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .height(56.dp)
+                            .shadow(6.dp, RoundedCornerShape(16.dp)),
+                        colors = ButtonDefaults.buttonColors(
+                            containerColor = Color(0xFF2563EB)
+                        ),
+                        shape = RoundedCornerShape(16.dp)
+                    ) {
+                        Icon(
+                            imageVector = Icons.Default.AccountBalance,
+                            contentDescription = null,
+                            tint = Color.White,
+                            modifier = Modifier.size(24.dp)
+                        )
+                        Spacer(modifier = Modifier.width(8.dp))
+                        Text(
+                            text = "Cierre de Caja",
+                            fontSize = 18.sp,
+                            fontWeight = FontWeight.SemiBold,
+                            color = Color.White
+                        )
+                    }
+                }
+
+                // Espaciador final
+                item {
+                    Spacer(modifier = Modifier.height(24.dp))
+                }
             }
         }
     }
@@ -195,28 +251,32 @@ fun StatCard(
 ) {
     Card(
         modifier = modifier
-            .height(100.dp)
-            .shadow(4.dp, RoundedCornerShape(16.dp)),
-        shape = RoundedCornerShape(16.dp),
+            .height(90.dp)
+            .shadow(4.dp, RoundedCornerShape(14.dp)),
+        shape = RoundedCornerShape(14.dp),
         colors = CardDefaults.cardColors(containerColor = Color.White)
     ) {
         Column(
             modifier = Modifier
                 .fillMaxSize()
-                .padding(12.dp),
+                .padding(10.dp),
             verticalArrangement = Arrangement.SpaceBetween
         ) {
             Icon(
                 imageVector = icon,
                 contentDescription = null,
                 tint = iconColor,
-                modifier = Modifier.size(24.dp)
+                modifier = Modifier.size(22.dp)
             )
             Column {
-                Text(text = label, fontSize = 12.sp, color = Color.Gray)
+                Text(
+                    text = label,
+                    fontSize = 11.sp,
+                    color = Color.Gray
+                )
                 Text(
                     text = value,
-                    fontSize = 18.sp,
+                    fontSize = 16.sp,
                     fontWeight = FontWeight.Bold,
                     color = Color.Black
                 )
@@ -224,6 +284,7 @@ fun StatCard(
         }
     }
 }
+
 @Composable
 fun QuickAccessCard(
     icon: ImageVector,
@@ -232,48 +293,42 @@ fun QuickAccessCard(
     label: String,
     onClick: () -> Unit,
     modifier: Modifier = Modifier
-) { Card(
+) {
+    Card(
         onClick = onClick,
         modifier = modifier
-            .height(120.dp)
-            .shadow(4.dp, RoundedCornerShape(16.dp)),
-        shape = RoundedCornerShape(16.dp),
+            .height(110.dp)
+            .shadow(4.dp, RoundedCornerShape(14.dp)),
+        shape = RoundedCornerShape(14.dp),
         colors = CardDefaults.cardColors(containerColor = Color.White)
-    ) { Column(
+    ) {
+        Column(
             modifier = Modifier
                 .fillMaxSize()
-                .padding(16.dp),
+                .padding(14.dp),
             horizontalAlignment = Alignment.Start,
             verticalArrangement = Arrangement.Center
-        ) { Box(
+        ) {
+            Box(
                 modifier = Modifier
-                    .size(48.dp)
-                    .background(iconBackgroundColor, shape = RoundedCornerShape(12.dp)),
+                    .size(44.dp)
+                    .background(iconBackgroundColor, shape = RoundedCornerShape(10.dp)),
                 contentAlignment = Alignment.Center
             ) {
                 Icon(
                     imageVector = icon,
                     contentDescription = null,
                     tint = iconColor,
-                    modifier = Modifier.size(28.dp)
-                ) }
-            Spacer(modifier = Modifier.height(12.dp))
+                    modifier = Modifier.size(26.dp)
+                )
+            }
+            Spacer(modifier = Modifier.height(10.dp))
             Text(
                 text = label,
-                fontSize = 16.sp,
+                fontSize = 15.sp,
                 fontWeight = FontWeight.Medium,
                 color = Color.Black
             )
         }
     }
-}
-@Preview(showBackground = true)
-@Composable
-fun HomeScreenPreview() {
-    HomeScreen(
-        onNavigateToProductos = {},
-        onNavigateToVentas = {},
-        onNavigateToCompras = {},
-        onNavigateToReportes = {}
-    )
 }
