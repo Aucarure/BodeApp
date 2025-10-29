@@ -21,16 +21,18 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.delay
-import kotlinx.coroutines.launch
+import androidx.lifecycle.viewmodel.compose.viewModel
+import com.tecsup.bodeapp.viewmodel.ReportesViewModel
+import com.tecsup.bodeapp.viewmodel.ReportesViewModelFactory
+import com.tecsup.bodeapp.data.database.AppDatabase
+import kotlinx.coroutines.*
 import java.io.OutputStream
 import java.text.SimpleDateFormat
 import java.util.*
 
 @Composable
 fun ReportesScreen(
+    viewModel: ReportesViewModel,
     onNavigateToHome: () -> Unit = {},
     onNavigateToProductos: () -> Unit = {},
     onNavigateToVentas: () -> Unit = {},
@@ -40,17 +42,26 @@ fun ReportesScreen(
     val context = LocalContext.current
     var fechaHoraActual by remember { mutableStateOf("") }
 
+    // Actualiza la hora cada minuto
     LaunchedEffect(Unit) {
         while (true) {
-            val formato = SimpleDateFormat("dd/MM/yyyy - hh:mm a", Locale("es"))
-            fechaHoraActual = formato.format(Date())
+            fechaHoraActual = SimpleDateFormat("dd/MM/yyyy - hh:mm a", Locale("es")).format(Date())
             delay(60_000)
         }
     }
+
+    // Cargar reportes automáticamente al entrar
+    // Cargar solo una vez al entrar (sin duplicar corrutinas)
+    LaunchedEffect(true) {
+        viewModel.cargarReportesManual()
+    }
+
+    val uiState by viewModel.uiState.collectAsState()
+
     val createPdfLauncher = rememberLauncherForActivityResult(
         contract = ActivityResultContracts.CreateDocument("application/pdf")
     ) { uri: Uri? ->
-        uri?.let { generarPDF(context, it) }
+        uri?.let { generarPDF(context, it, uiState) }
     }
 
     Column(
@@ -59,6 +70,7 @@ fun ReportesScreen(
             .background(Color(0xFFF7F7F7)),
         verticalArrangement = Arrangement.SpaceBetween
     ) {
+        // CABECERA
         Card(
             shape = RoundedCornerShape(bottomStart = 24.dp, bottomEnd = 24.dp),
             colors = CardDefaults.cardColors(containerColor = Color(0xFFE4080A)),
@@ -66,24 +78,16 @@ fun ReportesScreen(
             modifier = Modifier.fillMaxWidth()
         ) {
             Column(
-                modifier = Modifier
-                    .padding(horizontal = 16.dp, vertical = 50.dp),
+                modifier = Modifier.padding(horizontal = 16.dp, vertical = 50.dp),
                 horizontalAlignment = Alignment.Start
             ) {
-                Text(
-                    text = "Cierre de Caja",
-                    color = Color.White,
-                    fontSize = 22.sp,
-                    fontWeight = FontWeight.Bold
-                )
+                Text("Cierre de Caja", color = Color.White, fontSize = 22.sp, fontWeight = FontWeight.Bold)
                 Spacer(modifier = Modifier.height(8.dp))
-                Text(
-                    text = "Fecha y hora: $fechaHoraActual",
-                    color = Color.White.copy(alpha = 0.9f),
-                    fontSize = 14.sp
-                )
+                Text("Fecha y hora: $fechaHoraActual", color = Color.White.copy(alpha = 0.9f), fontSize = 14.sp)
             }
         }
+
+        // CONTENIDO
         LazyColumn(
             modifier = Modifier
                 .fillMaxWidth()
@@ -91,6 +95,7 @@ fun ReportesScreen(
                 .padding(horizontal = 16.dp, vertical = 8.dp),
             verticalArrangement = Arrangement.spacedBy(12.dp)
         ) {
+            // UTILIDAD NETA
             item {
                 Card(
                     modifier = Modifier.fillMaxWidth(),
@@ -101,19 +106,21 @@ fun ReportesScreen(
                     Column(modifier = Modifier.padding(16.dp)) {
                         Text("Utilidad Neta", color = Color.White, fontWeight = FontWeight.Bold)
                         Text(
-                            text = "—",
+                            text = "S/ ${"%.2f".format(uiState.utilidadNeta)}",
                             color = Color.White,
                             fontSize = 28.sp,
                             fontWeight = FontWeight.Bold
                         )
                         Text(
-                            text = "Sin datos disponibles",
+                            text = if (uiState.utilidadNeta == 0.0) "Sin datos disponibles" else "Datos actualizados",
                             color = Color.White.copy(alpha = 0.9f),
                             fontSize = 13.sp
                         )
                     }
                 }
             }
+
+            // VENTAS Y COMPRAS
             item {
                 Row(
                     modifier = Modifier.fillMaxWidth(),
@@ -121,20 +128,22 @@ fun ReportesScreen(
                 ) {
                     InfoCard(
                         titulo = "Ventas",
-                        monto = "22",
-                        detalle = "No registradas",
+                        monto = "S/ ${"%.2f".format(uiState.totalVentas)}",
+                        detalle = if (uiState.totalVentas == 0.0) "No registradas" else "Ventas del día",
                         colorMonto = Color(0xFF4CAF50),
                         modifier = Modifier.weight(1f)
                     )
                     InfoCard(
                         titulo = "Compras",
-                        monto = "3",
-                        detalle = "No registradas",
+                        monto = "S/ ${"%.2f".format(uiState.totalCompras)}",
+                        detalle = if (uiState.totalCompras == 0.0) "No registradas" else "Compras del día",
                         colorMonto = Color(0xFFE53935),
                         modifier = Modifier.weight(1f)
                     )
                 }
             }
+
+            // PRODUCTOS MÁS VENDIDOS
             item {
                 Card(
                     modifier = Modifier.fillMaxWidth(),
@@ -142,42 +151,35 @@ fun ReportesScreen(
                     elevation = CardDefaults.cardElevation(2.dp)
                 ) {
                     Column(modifier = Modifier.padding(16.dp)) {
-                        Text(
-                            text = "Productos Más Vendidos",
-                            fontWeight = FontWeight.Bold,
-                            color = Color.Black
-                        )
+                        Text("Productos Más Vendidos", fontWeight = FontWeight.Bold, color = Color.Black)
                         Spacer(modifier = Modifier.height(8.dp))
-                        val productosMasVendidos = emptyList<Pair<String, String>>()
-                        if (productosMasVendidos.isEmpty()) {
-                            Box(
-                                modifier = Modifier
-                                    .fillMaxWidth()
-                                    .padding(vertical = 12.dp),
-                                contentAlignment = Alignment.Center
-                            ) {
-                                Text(
-                                    text = "No hay productos vendidos",
-                                    color = Color.Gray,
-                                    fontSize = 14.sp
-                                )
+
+                        if (uiState.productosMasVendidos.isEmpty()) {
+                            Text("No hay productos vendidos", color = Color.Gray, fontSize = 14.sp)
+                        } else {
+                            uiState.productosMasVendidos.forEachIndexed { index, (nombre, cantidad) ->
+                                Text("${index + 1}. $nombre — $cantidad und.", color = Color.Black, fontSize = 14.sp)
                             }
                         }
                     }
                 }
             }
+
+            // BOTONES
             item {
                 Button(
-                    onClick = {},
+                    onClick = { viewModel.cargarReportesManual() },
                     colors = ButtonDefaults.buttonColors(containerColor = Color(0xFFE4080A)),
                     shape = RoundedCornerShape(15.dp),
                     modifier = Modifier.fillMaxWidth()
                 ) {
                     Icon(Icons.Default.PictureAsPdf, contentDescription = null, tint = Color.White)
                     Spacer(modifier = Modifier.width(8.dp))
-                    Text("Generar Reporte", color = Color.White)
+                    Text("Actualizar Datos", color = Color.White)
                 }
+
                 Spacer(modifier = Modifier.height(10.dp))
+
                 OutlinedButton(
                     onClick = { createPdfLauncher.launch("reporte_cierre_caja.pdf") },
                     shape = RoundedCornerShape(15.dp),
@@ -189,6 +191,8 @@ fun ReportesScreen(
                     Text("Descargar PDF")
                 }
             }
+
+            // RESUMEN
             item {
                 Card(
                     modifier = Modifier.fillMaxWidth(),
@@ -207,7 +211,7 @@ fun ReportesScreen(
             }
         }
 
-        // Barra inferior
+        // BARRA INFERIOR
         BottomNavigationBar(
             selectedItem = 4,
             onNavigateToHome = onNavigateToHome,
@@ -239,21 +243,41 @@ fun InfoCard(
         }
     }
 }
-fun generarPDF(context: Context, uri: Uri) {
+
+// GENERAR PDF REAL
+fun generarPDF(context: Context, uri: Uri, uiState: com.tecsup.bodeapp.viewmodel.ReportesUiState) {
     CoroutineScope(Dispatchers.IO).launch {
         val outputStream: OutputStream? = context.contentResolver.openOutputStream(uri)
         outputStream?.use {
-            val contenido = """
-                REPORTE DE CIERRE DE CAJA
-                Fecha: ${SimpleDateFormat("dd/MM/yyyy - hh:mm a", Locale("es")).format(Date())}
-                Sin datos disponibles para mostrar.
-            """.trimIndent()
+            val contenido = buildString {
+                appendLine("REPORTE DE CIERRE DE CAJA")
+                appendLine("Fecha: ${SimpleDateFormat("dd/MM/yyyy - hh:mm a", Locale("es")).format(Date())}")
+                appendLine("-----------------------------------")
+                appendLine("Total Ventas: S/ ${"%.2f".format(uiState.totalVentas)}")
+                appendLine("Total Compras: S/ ${"%.2f".format(uiState.totalCompras)}")
+                appendLine("Utilidad Neta: S/ ${"%.2f".format(uiState.utilidadNeta)}")
+                appendLine("")
+                appendLine("Productos más vendidos:")
+                if (uiState.productosMasVendidos.isEmpty()) {
+                    appendLine(" - No hay productos vendidos.")
+                } else {
+                    uiState.productosMasVendidos.forEach { (nombre, cantidad) ->
+                        appendLine(" - $nombre: $cantidad unidades")
+                    }
+                }
+            }
             it.write(contenido.toByteArray())
         }
     }
 }
+
 @Preview(showBackground = true)
 @Composable
 fun ReportesScreenPreview() {
-    ReportesScreen()
+    val context = LocalContext.current
+    val db = AppDatabase.getInstance(context)
+    val viewModel: ReportesViewModel = viewModel(
+        factory = ReportesViewModelFactory(db.ventaDao(), db.compraDao(), db.productoDao())
+    )
+    ReportesScreen(viewModel)
 }
