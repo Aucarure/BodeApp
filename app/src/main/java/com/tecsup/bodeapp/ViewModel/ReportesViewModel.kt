@@ -1,5 +1,6 @@
 package com.tecsup.bodeapp.viewmodel
 
+import android.util.Log
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.viewModelScope
@@ -7,20 +8,10 @@ import com.tecsup.bodeapp.data.dao.CompraDao
 import com.tecsup.bodeapp.data.dao.ProductoDao
 import com.tecsup.bodeapp.data.dao.ProductoVendido
 import com.tecsup.bodeapp.data.dao.VentaDao
-import com.tecsup.bodeapp.util.DateUtils
 import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.launch
 
-// Enum para los períodos de filtro
-enum class PeriodoReporte {
-    HOY,
-    SEMANA,
-    MES
-}
-
-// Estado de la UI de reportes
-data class ReporteUiState(
-    val periodoActual: PeriodoReporte = PeriodoReporte.HOY,
+data class ReportesUiState(
     val totalVentas: Double = 0.0,
     val totalCompras: Double = 0.0,
     val utilidadNeta: Double = 0.0,
@@ -40,103 +31,71 @@ class ReportesViewModel(
     private val productoDao: ProductoDao
 ) : ViewModel() {
 
-    private val _uiState = MutableStateFlow(ReporteUiState())
-    val uiState: StateFlow<ReporteUiState> = _uiState.asStateFlow()
-
-    init {
-        cambiarPeriodo(PeriodoReporte.HOY)
-    }
-
-    // Cambiar el período del reporte
-    fun cambiarPeriodo(periodo: PeriodoReporte) {
-        _uiState.value = _uiState.value.copy(
-            periodoActual = periodo,
-            cargando = true,
-            error = null
-        )
-        cargarDatos(periodo)
-    }
-
-    // Cargar datos según el período seleccionado
-    private fun cargarDatos(periodo: PeriodoReporte) {
+    private val _uiState = MutableStateFlow(ReportesUiState())
+    val uiState: StateFlow<ReportesUiState> = _uiState.asStateFlow()
+    fun cargarReportesManual() {
         viewModelScope.launch {
+            _uiState.value = _uiState.value.copy(cargando = true)
             try {
-                val (inicio, fin) = obtenerRangoFechas(periodo)
+                combine(
+                    ventaDao.obtenerTotalVentasDelDia(inicioDelDia()),
+                    compraDao.obtenerTotalComprasDelDia(inicioDelDia()),
+                    ventaDao.obtenerProductosMasVendidos()
+                ) { ventasHoy, comprasHoy, productosMasVendidos ->
 
-                _uiState.value = _uiState.value.copy(
-                    fechaInicio = inicio,
-                    fechaFin = fin
-                )
+                    val totalVentas = ventasHoy ?: 0.0
+                    val totalCompras = comprasHoy ?: 0.0
+                    val utilidad = totalVentas - totalCompras
 
-                // Obtener datos de forma secuencial
-                ventaDao.obtenerTotalVentasPorRango(inicio, fin).collect { totalVentas ->
-                    compraDao.obtenerTotalComprasPorRango(inicio, fin).collect { totalCompras ->
-                        ventaDao.contarVentasPorRango(inicio, fin).collect { cantVentas ->
-                            compraDao.contarComprasPorRango(inicio, fin).collect { cantCompras ->
-                                ventaDao.obtenerPromedioVentasPorRango(inicio, fin).collect { promVenta ->
-                                    ventaDao.obtenerProductosMasVendidosPorRango(inicio, fin).collect { topProductos ->
+                    Log.d("REPORTES_VM", "Ventas: $totalVentas, Compras: $totalCompras, Utilidad: $utilidad")
 
-                                        val ventas = totalVentas ?: 0.0
-                                        val compras = totalCompras ?: 0.0
-                                        val utilidad = ventas - compras
-
-                                        _uiState.value = ReporteUiState(
-                                            periodoActual = periodo,
-                                            totalVentas = ventas,
-                                            totalCompras = compras,
-                                            utilidadNeta = utilidad,
-                                            cantidadVentas = cantVentas,
-                                            cantidadCompras = cantCompras,
-                                            promedioVenta = promVenta ?: 0.0,
-                                            productosMasVendidos = topProductos,
-                                            cargando = false,
-                                            error = null,
-                                            fechaInicio = inicio,
-                                            fechaFin = fin
-                                        )
-                                    }
-                                }
-                            }
-                        }
-                    }
-                }
+                    ReportesUiState(
+                        totalVentas = totalVentas,
+                        totalCompras = totalCompras,
+                        utilidadNeta = utilidad,
+                        productosMasVendidos = productosMasVendidos.map {
+                            it.nombreProducto to it.totalVendido
+                        },
+                        cargando = false
+                    )
+                }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), ReportesUiState())
+                    .collect { estado -> _uiState.value = estado }
 
             } catch (e: Exception) {
-                _uiState.value = _uiState.value.copy(
-                    cargando = false,
-                    error = "Error al cargar datos: ${e.message}"
-                )
+                Log.e("REPORTES_VM", "Error cargando reportes: ${e.message}")
+                _uiState.value = ReportesUiState(cargando = false)
+            }
+        }
+        viewModelScope.launch {
+            val totalGeneral = ventaDao.obtenerTotalVentas() ?: 0.0
+            if (totalGeneral > 0 && _uiState.value.totalVentas == 0.0) {
+                _uiState.update { it.copy(totalVentas = totalGeneral, cargando = false) }
+                Log.d("REPORTES_VM", "Total general mostrado: $totalGeneral")
             }
         }
     }
 
-    // Obtener rango de fechas según el período
-    private fun obtenerRangoFechas(periodo: PeriodoReporte): Pair<Long, Long> {
-        return when (periodo) {
-            PeriodoReporte.HOY -> {
-                DateUtils.obtenerInicioDelDia() to DateUtils.obtenerFinDelDia()
-            }
-            PeriodoReporte.SEMANA -> {
-                DateUtils.obtenerInicioSemana() to DateUtils.obtenerFinSemana()
-            }
-            PeriodoReporte.MES -> {
-                DateUtils.obtenerInicioMes() to DateUtils.obtenerFinMes()
-            }
+    private fun inicioDelDia(): Long {
+        val calendar = Calendar.getInstance().apply {
+            set(Calendar.HOUR_OF_DAY, 0)
+            set(Calendar.MINUTE, 0)
+            set(Calendar.SECOND, 0)
+            set(Calendar.MILLISECOND, 0)
         }
+        return calendar.timeInMillis
     }
-
-    // Refrescar datos manualmente
-    fun refrescarDatos() {
-        cargarDatos(_uiState.value.periodoActual)
-    }
-
-    // Obtener texto descriptivo del período actual
-    fun obtenerDescripcionPeriodo(): String {
-        return when (_uiState.value.periodoActual) {
-            PeriodoReporte.HOY -> "Hoy"
-            PeriodoReporte.SEMANA -> "Esta semana"
-            PeriodoReporte.MES -> DateUtils.obtenerNombreMesActual()
+}
+class ReportesViewModelFactory(
+    private val ventaDao: VentaDao,
+    private val compraDao: CompraDao,
+    private val productoDao: ProductoDao
+) : ViewModelProvider.Factory {
+    override fun <T : ViewModel> create(modelClass: Class<T>): T {
+        if (modelClass.isAssignableFrom(ReportesViewModel::class.java)) {
+            @Suppress("UNCHECKED_CAST")
+            return ReportesViewModel(ventaDao, compraDao, productoDao) as T
         }
+        throw IllegalArgumentException("Unknown ViewModel class")
     }
 }
 

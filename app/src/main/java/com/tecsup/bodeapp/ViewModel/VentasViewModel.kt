@@ -207,7 +207,6 @@ class VentasViewModel(
         }
     }
 }
-
 class VentasViewModelFactory(
     private val productoDao: ProductoDao,
     private val ventaDao: VentaDao

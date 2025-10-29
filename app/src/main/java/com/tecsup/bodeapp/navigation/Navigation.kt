@@ -2,11 +2,14 @@ package com.tecsup.bodeapp.navigation
 
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.platform.LocalContext
+import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
 import com.tecsup.bodeapp.data.database.AppDatabase
 import com.tecsup.bodeapp.screens.*
+import com.tecsup.bodeapp.viewmodel.ReportesViewModel
+import com.tecsup.bodeapp.viewmodel.ReportesViewModelFactory
 
 sealed class Screen(val route: String) {
     object Home : Screen("home")
@@ -26,6 +29,8 @@ fun AppNavigation() {
     val productoDao = db.productoDao()
     val ventaDao = db.ventaDao()
     val compraDao = db.compraDao()
+    val ventaDao = db.ventaDao()
+
 
     NavHost(
         navController = navController,
@@ -72,7 +77,16 @@ fun AppNavigation() {
         }
 
         composable(Screen.Reportes.route) {
+            val reportesViewModel: ReportesViewModel = viewModel(
+                factory = ReportesViewModelFactory(
+                    ventaDao = ventaDao,
+                    compraDao = compraDao,
+                    productoDao = productoDao
+                )
+            )
+
             ReportesScreen(
+                viewModel = reportesViewModel,
                 onNavigateToHome = { navController.navigate(Screen.Home.route) },
                 onNavigateToProductos = { navController.navigate(Screen.Productos.route) },
                 onNavigateToVentas = { navController.navigate(Screen.Ventas.route) },
@@ -82,6 +96,10 @@ fun AppNavigation() {
                 compraDao = compraDao,
                 productoDao = productoDao
             )
+        }
+
+        composable(Screen.CierreCaja.route) {
+            CierreCajaScreen()
         }
     }
 }

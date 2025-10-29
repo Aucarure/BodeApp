@@ -44,6 +44,7 @@ dependencies {
     // Room
     implementation("androidx.room:room-runtime:2.6.1")
     implementation("androidx.room:room-ktx:2.6.1")
+    implementation(libs.androidx.compose.foundation)
     kapt("androidx.room:room-compiler:2.6.1")
 
     // Coroutines
@@ -67,6 +68,9 @@ dependencies {
     androidTestImplementation(libs.androidx.ui.test.junit4)
     debugImplementation(libs.androidx.ui.tooling)
     debugImplementation(libs.androidx.ui.test.manifest)
+    implementation("androidx.compose.material:material:1.6.0") // o superior
+    implementation("androidx.lifecycle:lifecycle-runtime-compose:2.7.0") // para collectAsStateWithLifecycle
+
 
     // Navigation y Material Icons
     implementation("androidx.navigation:navigation-compose:2.8.0")

@@ -34,14 +34,5 @@ interface ProductoDao {
     @Query("SELECT COUNT(*) FROM productos")
     fun contarProductos(): Flow<Int>
 
-    // ====== NUEVAS CONSULTAS PARA VALIDACIÓN ======
 
-    @Query("SELECT stock FROM productos WHERE id = :productoId")
-    suspend fun obtenerStockPorId(productoId: Int): Int?
-
-    @Query("SELECT * FROM productos WHERE stock > 0 ORDER BY nombre ASC")
-    fun obtenerProductosConStock(): Flow<List<Producto>>
-
-    @Query("SELECT * FROM productos WHERE stock = 0 ORDER BY nombre ASC")
-    fun obtenerProductosSinStock(): Flow<List<Producto>>
 }
