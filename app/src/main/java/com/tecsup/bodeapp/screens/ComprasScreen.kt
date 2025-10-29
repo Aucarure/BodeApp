@@ -8,6 +8,7 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
+import androidx.compose.material.icons.filled.Search
 import androidx.compose.material.icons.filled.ShoppingCart
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
@@ -39,14 +40,20 @@ fun ComprasScreen(
     val viewModel: ComprasViewModel = viewModel(factory = ComprasViewModelFactory(compraDao, productoDao))
     val compras by viewModel.comprasDelDia.collectAsStateWithLifecycle()
     val totalGastado by viewModel.totalGastadoHoy.collectAsStateWithLifecycle()
+    // Estados
     var nombreProducto by remember { mutableStateOf("") }
     var cantidad by remember { mutableStateOf("") }
     var costoTotal by remember { mutableStateOf("") }
     var errorNombre by remember { mutableStateOf(false) }
     var errorCantidad by remember { mutableStateOf(false) }
     var errorCosto by remember { mutableStateOf(false) }
+    var query by remember { mutableStateOf("") }
     val snackbarHostState = remember { SnackbarHostState() }
     val scope = rememberCoroutineScope()
+    // Lista filtrada por búsqueda
+    val comprasFiltradas = compras.filter {
+        it.nombreProducto.contains(query, ignoreCase = true)
+    }
 
     Scaffold(
         containerColor = Color(0xFFF0F4FF),
@@ -67,7 +74,7 @@ fun ComprasScreen(
                 .fillMaxSize()
                 .padding(paddingValues)
         ) {
-            //Encabezado
+            // Encabezado
             Box(
                 modifier = Modifier
                     .fillMaxWidth()
@@ -109,7 +116,7 @@ fun ComprasScreen(
                     .padding(horizontal = 16.dp, vertical = 16.dp),
                 verticalArrangement = Arrangement.spacedBy(16.dp)
             ) {
-                //Formulario
+                // Formulario
                 item {
                     Card(
                         modifier = Modifier.fillMaxWidth(),
@@ -129,7 +136,6 @@ fun ComprasScreen(
                                 color = Color.Black,
                                 modifier = Modifier.padding(bottom = 16.dp)
                             )
-
                             OutlinedTextField(
                                 value = nombreProducto,
                                 onValueChange = {
@@ -146,7 +152,6 @@ fun ComprasScreen(
                             if (errorNombre) {
                                 Text("El nombre no puede estar vacío", color = Color.Red, fontSize = 12.sp)
                             }
-
                             OutlinedTextField(
                                 value = cantidad,
                                 onValueChange = {
@@ -162,9 +167,8 @@ fun ComprasScreen(
                                 shape = RoundedCornerShape(12.dp),
                             )
                             if (errorCantidad) {
-                                Text(" La cantidad debe ser un número positivo", color = Color.Red, fontSize = 12.sp)
+                                Text("La cantidad debe ser un número positivo", color = Color.Red, fontSize = 12.sp)
                             }
-
                             OutlinedTextField(
                                 value = costoTotal,
                                 onValueChange = {
@@ -182,7 +186,6 @@ fun ComprasScreen(
                             if (errorCosto) {
                                 Text("El costo debe ser un número positivo", color = Color.Red, fontSize = 12.sp)
                             }
-
                             Button(
                                 onClick = {
                                     val cantidadInt = cantidad.toIntOrNull() ?: -1
@@ -201,7 +204,6 @@ fun ComprasScreen(
                                         errorCosto = true
                                         valid = false
                                     }
-
                                     if (valid) {
                                         viewModel.agregarCompra(nombreProducto, cantidadInt, costoTotalDouble)
                                         nombreProducto = ""
@@ -229,7 +231,6 @@ fun ComprasScreen(
                         }
                     }
                 }
-
                 // Total gastado
                 item {
                     Card(
@@ -253,8 +254,23 @@ fun ComprasScreen(
                         }
                     }
                 }
-
-                //Historial
+                // Barra de búsqueda
+                item {
+                    OutlinedTextField(
+                        value = query,
+                        onValueChange = { query = it },
+                        label = { Text("Buscar producto...") },
+                        leadingIcon = {
+                            Icon(imageVector = Icons.Default.Search, contentDescription = "Buscar")
+                        },
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(vertical = 8.dp),
+                        shape = RoundedCornerShape(12.dp),
+                        singleLine = true
+                    )
+                }
+                // Historial
                 item {
                     Text(
                         text = "Historial de Compras",
@@ -264,44 +280,54 @@ fun ComprasScreen(
                         modifier = Modifier.padding(vertical = 8.dp)
                     )
                 }
-
-                //Listado de compras
-                items(compras) { compra ->
-                    Card(
-                        modifier = Modifier.fillMaxWidth(),
-                        shape = RoundedCornerShape(12.dp),
-                        colors = CardDefaults.cardColors(containerColor = Color.White),
-                        elevation = CardDefaults.cardElevation(defaultElevation = 1.dp)
-                    ) {
-                        Row(
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .padding(16.dp),
-                            horizontalArrangement = Arrangement.SpaceBetween,
-                            verticalAlignment = Alignment.CenterVertically
+                // Listado filtrado
+                if (comprasFiltradas.isEmpty()) {
+                    item {
+                        Text(
+                            text = "No se encontraron compras",
+                            fontSize = 14.sp,
+                            color = Color.Gray,
+                            modifier = Modifier.align(Alignment.CenterHorizontally)
+                        )
+                    }
+                } else {
+                    items(comprasFiltradas) { compra ->
+                        Card(
+                            modifier = Modifier.fillMaxWidth(),
+                            shape = RoundedCornerShape(12.dp),
+                            colors = CardDefaults.cardColors(containerColor = Color.White),
+                            elevation = CardDefaults.cardElevation(defaultElevation = 1.dp)
                         ) {
-                            Column(modifier = Modifier.weight(1f)) {
-                                Text(compra.nombreProducto, fontSize = 16.sp, fontWeight = FontWeight.Medium)
-                                Text(
-                                    "Cantidad: ${compra.cantidad}",
-                                    fontSize = 13.sp,
-                                    color = Color.Gray,
-                                    modifier = Modifier.padding(top = 4.dp)
-                                )
-                            }
-                            Column(horizontalAlignment = Alignment.End) {
-                                Text(
-                                    "S/ ${String.format("%.2f", compra.costoTotal)}",
-                                    fontSize = 18.sp,
-                                    fontWeight = FontWeight.Bold,
-                                    color = Color(0xFF8B5CF6)
-                                )
-                                Text(
-                                    "S/ ${String.format("%.2f", compra.costoUnitario)} c/u",
-                                    fontSize = 12.sp,
-                                    color = Color.Gray,
-                                    modifier = Modifier.padding(top = 4.dp)
-                                )
+                            Row(
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .padding(16.dp),
+                                horizontalArrangement = Arrangement.SpaceBetween,
+                                verticalAlignment = Alignment.CenterVertically
+                            ) {
+                                Column(modifier = Modifier.weight(1f)) {
+                                    Text(compra.nombreProducto, fontSize = 16.sp, fontWeight = FontWeight.Medium)
+                                    Text(
+                                        "Cantidad: ${compra.cantidad}",
+                                        fontSize = 13.sp,
+                                        color = Color.Gray,
+                                        modifier = Modifier.padding(top = 4.dp)
+                                    )
+                                }
+                                Column(horizontalAlignment = Alignment.End) {
+                                    Text(
+                                        "S/ ${String.format("%.2f", compra.costoTotal)}",
+                                        fontSize = 18.sp,
+                                        fontWeight = FontWeight.Bold,
+                                        color = Color(0xFF8B5CF6)
+                                    )
+                                    Text(
+                                        "S/ ${String.format("%.2f", compra.costoUnitario)} c/u",
+                                        fontSize = 12.sp,
+                                        color = Color.Gray,
+                                        modifier = Modifier.padding(top = 4.dp)
+                                    )
+                                }
                             }
                         }
                     }
